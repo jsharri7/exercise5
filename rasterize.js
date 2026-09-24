@@ -152,20 +152,44 @@ function loadTriangles() {
 
 // setup the webGL shaders
 function setupShaders() {
-    
-    // define fragment shader in essl using es6 template strings
+// this shader colors the triangles with a blue-to-violet gradient
     var fShaderCode = `
+        precision mediump float;
+        varying vec3 vColor;
+
         void main(void) {
-            gl_FragColor = vec4(1.0, 1.0, 1.0, 1.0); // all fragments are white
+            gl_FragColor = vec4(vColor, 1.0);
         }
     `;
     
-    // define vertex shader in essl using es6 template strings
+    // this shader moves and reshapes the triangles before drawing them
     var vShaderCode = `
         attribute vec3 vertexPosition;
+        varying vec3 vColor;
 
         void main(void) {
-            gl_Position = vec4(vertexPosition, 1.0); // use the untransformed position
+            // make a copy so we can change the position a little
+            vec3 position = vertexPosition;
+
+            // enlarge the triangles and move them from 0-to-1 space
+            // into the center of the webgl screen
+            position.xy = position.xy * 1.45 - vec2(0.72, 0.72);
+
+            // add a sideways lean so the triangles look reshaped
+            position.x += 0.22 * position.y;
+
+            // add a tiny wave so the shape is not totally flat
+            position.y += 0.10 * sin(position.x * 6.0);
+
+            // send the changed position to the screen
+            gl_Position = vec4(position, 1.0);
+
+            // make the color change a little based on screen position
+            vColor = vec3(
+                0.25 + 0.55 * (position.x + 1.0) * 0.5,
+                0.20 + 0.35 * (position.y + 1.0) * 0.5,
+                0.85
+            );
         }
     `;
     
